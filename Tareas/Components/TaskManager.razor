@@ -1,0 +1,43 @@
+﻿@page "/tareas"
+
+@using Tareas.Models
+@using Tareas.Services
+@inject TaskService TaskService
+@using MudBlazor
+@inject HttpClient httpClient
+
+
+<TaskForm OnTaskAdded="LoadTasks" />
+
+<MudTable Items="@tasks" Hover="true" Breakpoint="Breakpoint.Sm">
+	<HeaderContent>
+		<MudTh style="width: 5%">#</MudTh>
+		<MudTh style="width: 20%">Tarea</MudTh>
+		<MudTh style="width: 15%">Estado</MudTh>
+		<MudTh>Acciones</MudTh>
+	</HeaderContent>
+	<RowTemplate>
+		<MudTd DataLabel="ID">@context.Id</MudTd>
+		<MudTd DataLabel="Tarea">@context.Description</MudTd>
+		<MudTd DataLabel="Estado">@((context.IsCompleted ? "✅" : "❌"))</MudTd>
+		<MudTd>
+			<TaskItem Task="context" OnTaskUpdated="LoadTasks" />
+		</MudTd>
+	</RowTemplate>
+</MudTable>
+
+
+@code {
+	private List<Models.Task> tasks = new();
+
+	protected override void OnInitialized()
+	{
+		LoadTasks();
+	}
+
+	private void LoadTasks()
+	{
+		tasks = TaskService.GetTasks();
+		StateHasChanged();
+	}
+}

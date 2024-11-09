@@ -1,0 +1,86 @@
+﻿@using Tareas.Models
+@using Tareas.Services
+@inject TaskService TaskService
+
+@if (isEditing)
+{
+	<MudContainer Style="display: flex">
+		<MudInput T="string" Placeholder="Editartarea" @bind-Value="newDescription" Label="Editar Tarea" />
+		<MudButton Style="margin-left: 30px; margin-top:5px" Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.Save" Color="Color.Info" OnClick="SaveChanges">Guardar</MudButton>
+		<MudButton Style="margin-left: 30px; margin-top:5px" Variant="Variant.Filled" OnClick="CancelEdit">Cancelar</MudButton>
+	</MudContainer>
+	@if (!string.IsNullOrWhiteSpace(errorMessage))
+	{
+		<MudAlert Severity="Severity.Error" Dense="true" Class="my-2" Style="font-size: 0.9em; white-space: nowrap; margin-right: 200px">
+			@errorMessage
+		</MudAlert>
+	}
+}
+else
+{
+	<MudButton Color="Color.Primary" OnClick="@StartEdit">
+		<MudIcon Icon="@Icons.Material.Filled.Edit" />
+	</MudButton>
+
+	<MudButton Color="Color.Error" OnClick="@(() => RemoveTask(Task.Id))" Class="ml-8">
+		<MudIcon Icon="@Icons.Material.Filled.Delete" />
+	</MudButton>
+
+	<MudButton Color="Color.Success" OnClick="@(() => ToggleTaskCompletion(Task.Id))" Class="ml-8"
+			   StartIcon="@(Task.IsCompleted ? Icons.Material.Filled.CheckBoxOutlineBlank : Icons.Material.Filled.CheckBox)">
+		@(Task.IsCompleted ? "Marcar como pendiente" : "Marcar como completada")
+	</MudButton>
+}
+
+@code {
+	[Parameter] public Models.Task Task { get; set; }
+	[Parameter] public EventCallback OnTaskUpdated { get; set; }
+
+	private string errorMessage = string.Empty;
+	private bool isEditing = false;
+	private string newDescription = string.Empty;
+
+	protected override void OnParametersSet()
+	{
+		newDescription = Task.Description;
+	}
+
+	private void StartEdit()
+	{
+		isEditing = true;
+		errorMessage = string.Empty;
+	}
+
+	private void CancelEdit()
+	{
+		isEditing = false;
+		newDescription = Task.Description;
+	}
+
+	private void SaveChanges()
+	{
+
+		if (string.IsNullOrWhiteSpace(newDescription))
+		{
+			errorMessage = "La descripción no puede estar vacía.";
+			return;
+		}
+
+		TaskService.UpdateTask(Task.Id, newDescription);
+		OnTaskUpdated.InvokeAsync();
+		isEditing = false;
+		errorMessage = string.Empty;
+	}
+
+	private void ToggleTaskCompletion(int taskId)
+	{
+		TaskService.ToggleTaskCompletion(taskId);
+		OnTaskUpdated.InvokeAsync();
+	}
+
+	private void RemoveTask(int taskId)
+	{
+		TaskService.RemoveTask(taskId);
+		OnTaskUpdated.InvokeAsync();
+	}
+}
